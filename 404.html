@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nie ma takiej strony</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ff5a1f'/%3E%3Cpath d='M12 9.5v13l10-6.5z' fill='%230b0b0a'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: #0b0b0a; --fg: #edebe4; --muted: #8e8c84; --line: rgba(237, 235, 228, .12); --accent: #ff5a1f; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--fg); font-family: "Archivo", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    main { min-height: 100%; display: grid; place-content: center; gap: 22px; padding: 24px 16px; text-align: center; }
+    .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; color: var(--muted); }
+    h1 { font-weight: 800; font-variation-settings: "wdth" 66; font-stretch: 66%; text-transform: uppercase; font-size: clamp(64px, 16vw, 180px); line-height: .9; }
+    h1 em { font-style: normal; color: var(--accent); }
+    p { color: var(--muted); }
+    a { justify-self: center; color: var(--fg); text-decoration: none; padding: 13px 22px; border: 1px solid var(--line); border-radius: 999px; font-size: 14px; transition: background-color .4s, color .4s; }
+    a:hover { background: var(--fg); color: var(--bg); }
+  </style>
+</head>
+<body>
+  <main>
+    <span class="mono">Błąd 404</span>
+    <h1>Ups<em>.</em></h1>
+    <p>Tej strony tu nie ma. Może link się zmienił.</p>
+    <a href="./">Wróć do portfolio</a>
+  </main>
+</body>
+</html>
