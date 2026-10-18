@@ -1,7 +1,10 @@
 @echo off
-rem Wysyła wszystkie zmiany na GitHuba (strona odświeży się po ok. minucie).
+chcp 65001 >nul
+rem Wysyła wszystkie ręczne zmiany (np. poprawione teksty) na GitHuba.
 cd /d "%~dp0"
 git add -A
-git commit -m "Aktualizacja portfolio"
+git commit -q -m "Aktualizacja portfolio"
 git push
+echo.
+echo Gotowe! Strona odswiezy sie za ok. minute.
 pause
