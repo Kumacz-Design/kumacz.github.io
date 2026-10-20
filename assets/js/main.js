@@ -446,6 +446,8 @@
     fill();
     lb.hidden = false;
     html.classList.add('lb-open');
+    // own history entry, so the phone's Back button closes the preview instead of leaving the page
+    history.pushState({ lb: true }, '');
     closeBtn.focus({ preventScroll: true });
     if (reduce) return;
 
@@ -464,7 +466,7 @@
     }
   };
 
-  const close = () => {
+  const closeNow = () => {
     if (!isOpen || busy) return;
     busy = true;
     const done = () => {
@@ -495,14 +497,25 @@
       .then(() => { done(); anims.forEach(a => a.cancel()); });
   };
 
+  // buttons/Esc go through history.back(), so the entry added in open() is removed too
+  const close = () => {
+    if (!isOpen) return;
+    if (history.state && history.state.lb) history.back();
+    else closeNow();
+  };
+  addEventListener('popstate', () => { if (isOpen) closeNow(); });
+
   const step = async d => {
     if (list.length < 2 || busy) return;
     pos = (pos + d + list.length) % list.length;
     if (reduce) return fill();
     busy = true;
     const target = mode === 'full' ? lbFull : lbFeed;
-    await target.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: `translateX(${-d * 48}px)` }],
-      { duration: 240, easing: EASE_IN, fill: 'forwards' }).finished;
+    await Promise.race([
+      target.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: `translateX(${-d * 48}px)` }],
+        { duration: 240, easing: EASE_IN, fill: 'forwards' }).finished,
+      new Promise(r => setTimeout(r, 320)),
+    ]);
     fill();
     try { await lbImg.decode(); } catch (_) { /* ignore */ }
     target.getAnimations().forEach(a => a.cancel());
