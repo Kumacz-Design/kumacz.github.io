@@ -265,10 +265,10 @@ a.ch-link:hover { color: var(--accent); opacity: 1; }
 .perk__tags .tag { font-size: 11px; padding: 6px 10px; color: var(--fg); }
 .perk--wide { grid-column: 1 / -1; display: grid; grid-template-columns: 1.2fr 1fr; gap: clamp(24px, 4vw, 64px); align-items: center; }
 /* AI info: orange frame so it stands out (card 07, the note in Warsztat, the line in Kontakt) */
-.perk--wide, .noai, .contact__note, .hero__ai { border: 1.5px solid var(--accent); background: rgba(255, 90, 31, .06); }
-.hero__ai { display: block; max-width: 440px; padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.45; color: var(--muted); transition: background-color .3s; }
-.hero__ai b { color: var(--fg); font-weight: 600; }
-@media (hover: hover) { .hero__ai:hover { background: rgba(255, 90, 31, .12); } }
+.perk--wide, .noai, .contact__note { border: 1.5px solid var(--accent); background: rgba(255, 90, 31, .06); }
+/* hero: just bold text, no frame */
+.hero__ai { display: block; max-width: 440px; font-weight: 700; font-size: clamp(15px, 1.2vw, 17px); line-height: 1.45; color: var(--fg); transition: color .3s; }
+@media (hover: hover) { .hero__ai:hover { color: var(--accent); } }
 .nav__ai { color: var(--accent); }
 #ai { scroll-margin-top: 90px; }
 .perk--wide p { max-width: 60ch; }
