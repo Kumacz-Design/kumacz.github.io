@@ -264,6 +264,8 @@ a.ch-link:hover { color: var(--accent); opacity: 1; }
 .perk__tags { margin-top: auto; padding-top: 22px; display: flex; flex-wrap: wrap; gap: 6px; }
 .perk__tags .tag { font-size: 11px; padding: 6px 10px; color: var(--fg); }
 .perk--wide { grid-column: 1 / -1; display: grid; grid-template-columns: 1.2fr 1fr; gap: clamp(24px, 4vw, 64px); align-items: center; }
+/* AI info: orange frame so it stands out (card 07, the note in Warsztat, the line in Kontakt) */
+.perk--wide, .noai, .contact__note { border: 1.5px solid var(--accent); background: rgba(255, 90, 31, .06); }
 .perk--wide p { max-width: 60ch; }
 .perk__ai { border-top: 1px solid var(--line); }
 .perk__ai li { display: grid; grid-template-columns: 110px 1fr; gap: 14px; align-items: baseline; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
@@ -313,10 +315,10 @@ a.ch-link:hover { color: var(--accent); opacity: 1; }
 .craft__points p { color: var(--muted); }
 .craft__points strong { color: var(--fg); font-weight: 600; }
 .craft--alt { grid-template-columns: 1fr 1.35fr; margin-top: clamp(64px, 10vh, 120px); }
-.noai { margin-top: 24px; padding: 4px 0 4px 16px; border-left: 2px solid var(--accent); }
+.noai { margin-top: 24px; padding: 16px 18px; border-radius: 12px; }
 .noai__title { font-weight: 600; font-size: clamp(16px, 1.3vw, 19px); letter-spacing: -.01em; line-height: 1.3; }
 .noai__text { color: var(--muted); margin-top: 4px; }
-.contact__note { color: var(--muted); margin-top: 28px; }
+.contact__note { display: inline-block; color: var(--fg); margin-top: 28px; padding: 10px 16px; border-radius: 999px; }
 /* Contact keeps its original layout: label on the left, content indented */
 .contact .section-head { grid-template-columns: minmax(120px, 1fr) 3fr; gap: 24px; }
 .contact .section-head > .mono { padding-top: .6em; }
