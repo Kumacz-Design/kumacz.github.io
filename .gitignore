@@ -6,3 +6,6 @@ __pycache__/
 
 # oryginały (duże PNG) zostają tylko na komputerze
 portfolio-miniatury-oryginaly/
+
+# szablony maili (tylko u Ciebie, nie na stronie)
+mail/
