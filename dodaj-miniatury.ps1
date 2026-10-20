@@ -64,6 +64,7 @@ if ($LASTEXITCODE -ne 0) {
   exit 0
 }
 Write-Host 'Wysyłam na GitHuba...'
+& (Join-Path $root 'narzedzia\wersja.ps1')
 git add -A
 git commit -q -m ("Nowe miniaturki: " + ($added -join ', '))
 git push -q
