@@ -13,6 +13,7 @@
       return {
         i,
         src: DIR + encodeURIComponent(t.file),
+        sm: DIR + 'sm/' + encodeURIComponent(t.file),
         title: t.title || t.file.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' '),
         cats: cats.length ? cats : ['Inne'],
         channelName: String(t.channel || '').trim(),
@@ -32,9 +33,17 @@
     return badge + name;
   };
 
+  // <img> with an 800px copy for small screens; falls back to the full file if sm/ is missing
+  const img = (t, sizes, attrs = '') =>
+    `<img src="${esc(t.src)}" srcset="${esc(t.sm)} 800w, ${esc(t.src)} 1280w" sizes="${sizes}" ${attrs}>`;
+  document.addEventListener('error', e => {
+    const el = e.target;
+    if (el.tagName === 'IMG' && el.srcset) { el.removeAttribute('srcset'); el.removeAttribute('sizes'); }
+  }, true);
+
+
   const html = document.documentElement;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const finePointer = matchMedia('(pointer: fine)').matches;
   const EASE = 'cubic-bezier(.16,1,.3,1)';
   const EASE_IN = 'cubic-bezier(.5,0,.75,0)';
   const $ = (s, r = document) => r.querySelector(s);
@@ -43,11 +52,17 @@
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const arrow = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 10 10 2M4 2h6v6" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>';
 
+  // example images written straight in index.html ("Dlaczego ja") get the same small copies
+  $$('.perk img[src^="thumbnails/"]').forEach(el => {
+    const f = el.getAttribute('src').slice(DIR.length);
+    el.sizes = '(max-width: 640px) 92vw, 30vw';
+    el.srcset = `${DIR}sm/${f} 800w, ${DIR}${f} 1280w`;
+  });
   /* ---------- Config ---------- */
   $$('[data-p]').forEach(n => { if (P[n.dataset.p]) n.textContent = P[n.dataset.p]; });
-  if (P.name) document.title = `${P.name} — Miniatury YouTube`;
+  if (P.name) document.title = `${P.name} · miniaturki YouTube`;
   if (P.available === false) $$('[data-available]').forEach(n => n.remove());
-  $$('[data-works]').forEach(n => (n.textContent = pad(items.length)));
+  $$('[data-works]').forEach(n => (n.textContent = items.length));
   $$('[data-year]').forEach(n => (n.textContent = new Date().getFullYear()));
   $$('[data-tools]').forEach(n => (n.textContent = (P.tools || []).join(' · ')));
   $$('[data-socials]').forEach(ul => {
@@ -62,20 +77,17 @@
   $$('[data-mail]').forEach(a => {
     const mail = P.email || a.textContent.trim();
     a.href = 'mailto:' + mail;
-    a.setAttribute('aria-label', mail);
-    a.innerHTML = `<span class="roll" aria-hidden="true">${[...mail].map((c, i) =>
-      `<span class="ch" style="--i:${i}" data-c="${esc(c)}">${esc(c)}</span>`).join('')}</span>`;
+    a.textContent = mail;
   });
 
   /* ---------- Grid ---------- */
   const grid = $('.grid');
   grid.innerHTML = items.map((t, n) => `
     <article class="card${t.featured ? ' is-featured' : ''}" data-i="${t.i}">
-      <button class="card__media" data-open="${t.i}" data-cursor="Zobacz" aria-label="Otwórz: ${esc(t.title)}">
-        <img src="${esc(t.src)}" alt="${esc(t.title)}" loading="${n < 3 ? 'eager' : 'lazy'}" decoding="async">
+      <button class="card__media" data-open="${t.i}" aria-label="Otwórz: ${esc(t.title)}">
+        ${img(t, '(max-width: 560px) 100vw, (max-width: 1100px) 50vw, 33vw', `alt="${esc(t.title)}" loading="${n < 3 ? 'eager' : 'lazy'}" decoding="async"`)}
       </button>
       <div class="card__info">
-        <span class="mono card__no">${pad(n + 1)}</span>
         <div class="card__body">
           <h3 class="card__title">${esc(t.title)}</h3>
           <p class="card__meta">${channelHtml(t)}<span class="card__tags">${t.cats.map(c => `<span class="tag mono">${esc(c)}</span>`).join('')}</span></p>
@@ -87,7 +99,7 @@
   const io = new IntersectionObserver(entries => {
     let k = 0;
     entries.filter(e => e.isIntersecting).forEach(e => {
-      e.target.style.setProperty('--d', (k++ * 0.12) + 's');
+      e.target.style.setProperty('--d', (k++ * 0.06) + 's');
       e.target.classList.add('is-in');
       io.unobserve(e.target);
     });
@@ -102,7 +114,7 @@
   items.forEach(t => t.cats.forEach(c => catCount.set(c, (catCount.get(c) || 0) + 1)));
   const cats = [...catCount.keys()].sort((a, b) => catCount.get(b) - catCount.get(a));
   const mkFilter = (cat, label, count) =>
-    `<button class="filter" data-filter="${esc(cat)}" aria-pressed="false">${esc(label)}<sup>${pad(count)}</sup></button>`;
+    `<button class="filter" data-filter="${esc(cat)}" aria-pressed="false">${esc(label)}<sup>${count}</sup></button>`;
   filters.insertAdjacentHTML('beforeend',
     mkFilter('*', 'Wszystkie', items.length) +
     cats.map(c => mkFilter(c, c, catCount.get(c))).join(''));
@@ -128,7 +140,7 @@
   requestAnimationFrame(() => (pill.style.transition = ''));
 
   /* ---------- Pagination ("Pokaż więcej") ---------- */
-  const PAGE = 9;
+  const PAGE = matchMedia('(max-width: 560px)').matches ? 6 : 9;
   let limit = PAGE;
   const moreWrap = $('.more');
   const moreBtn = $('.more__btn');
@@ -173,8 +185,8 @@
       c.classList.add('is-in');
       if (reduce) return;
       if (!wasShown.get(c)) {
-        c.animate([{ opacity: 0, transform: 'translateY(48px)' }, { opacity: 1, transform: 'none' }],
-          { duration: 1000, easing: EASE, delay: 60 * k++, fill: 'backwards' });
+        c.animate([{ opacity: 0, transform: 'translateY(16px)' }, { opacity: 1, transform: 'none' }],
+          { duration: 600, easing: EASE, delay: 40 * k++, fill: 'backwards' });
         return;
       }
       const f = first.get(c), l = c.getBoundingClientRect();
@@ -182,7 +194,7 @@
       if (dx || dy || Math.abs(sx - 1) > .01) {
         c.style.transformOrigin = '0 0';
         c.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${sx})` }, { transform: 'none' }],
-          { duration: 1000, easing: EASE });
+          { duration: 600, easing: EASE });
       }
     });
   };
@@ -206,11 +218,10 @@
     if (!show || !latest.length) { if (show) show.remove(); return; }
     const stack = $('.show__stack', show);
     const titleEl = $('.show__title', show);
-    const noEl = $('.show__no', show);
     const bar = $('.show__bar i', show);
     const DUR = 3600;
     stack.innerHTML = latest.map((t, k) =>
-      `<button class="show__card" data-open="${t.i}" data-all data-cursor="Zobacz" aria-label="Otwórz: ${esc(t.title)}"${k ? ' tabindex="-1"' : ''}><img src="${esc(t.src)}" alt="" decoding="async"></button>`).join('');
+      `<button class="show__card" data-open="${t.i}" data-all aria-label="Otwórz: ${esc(t.title)}"${k ? ' tabindex="-1"' : ''}>${img(t, '(max-width: 900px) 90vw, 45vw', 'alt="" decoding="async"')}</button>`).join('');
     const cards = $$('.show__card', stack);
     let order = cards.map((_, k) => k);
     const paint = () => cards.forEach((c, k) => {
@@ -221,7 +232,6 @@
     });
     const caption = () => {
       const t = latest[order[0]];
-      noEl.textContent = pad(order[0] + 1);
       titleEl.textContent = t.title;
     };
     paint(); caption();
@@ -270,27 +280,9 @@
       const m = String(s.value).trim().match(/^(\d+(?:[.,]\d+)?)(.*)$/);
       const num = m ? m[1] : '';
       const rest = m ? m[2] : String(s.value);
-      return `<div class="stat" data-reveal><span class="stat__value"><span data-count="${esc(num)}">${esc(num)}</span>${rest ? `<b>${esc(rest)}</b>` : ''}</span><span class="stat__label mono">${esc(s.label)}</span></div>`;
+      return `<div class="stat" data-reveal><span class="stat__value"><span>${esc(num)}</span>${rest ? `<b>${esc(rest)}</b>` : ''}</span><span class="stat__label mono">${esc(s.label)}</span></div>`;
     }).join('');
-    $$('.stat', box).forEach((n, k) => { n.style.setProperty('--d', k * 0.08 + 's'); io.observe(n); });
-    if (reduce) return;
-    const counter = new IntersectionObserver(es => es.forEach(e => {
-      if (!e.isIntersecting) return;
-      counter.unobserve(e.target);
-      const el = e.target, raw = el.dataset.count, dec = raw.includes(',') ? ',' : '.';
-      const target = parseFloat(raw.replace(',', '.'));
-      const digits = (raw.split(/[.,]/)[1] || '').length;
-      if (!isFinite(target)) return;
-      const t0 = performance.now(), D = 1400;
-      const tick = t => {
-        const p = Math.min((t - t0) / D, 1), v = target * (1 - Math.pow(1 - p, 3));
-        el.textContent = v.toFixed(digits).replace('.', dec);
-        if (p < 1) requestAnimationFrame(tick); else el.textContent = raw;
-      };
-      el.textContent = (0).toFixed(digits).replace('.', dec);
-      requestAnimationFrame(tick);
-    }), { threshold: 0.6 });
-    $$('[data-count]', box).forEach(n => n.dataset.count && counter.observe(n));
+    $$('.stat', box).forEach(n => io.observe(n));
   })();
 
   // niche tags in the "Różne nisze" card
@@ -303,15 +295,16 @@
 
   /* ---------- Strip (marquee) ---------- */
   const strip = $('.strip');
+  // on phones only the first row is shown (second row is display: none)
   const rows = $$('.strip__row').map((row, r) => {
-    if (!items.length) return null;
+    if (!items.length || getComputedStyle(row).display === 'none') return null;
     const list = r ? [...items].reverse() : items;
     const reps = Math.max(1, Math.ceil(12 / list.length));
     const group = document.createElement('div');
     group.className = 'strip__group';
     for (let k = 0; k < reps; k++) {
       list.forEach(t => group.insertAdjacentHTML('beforeend',
-        `<button class="strip__item" data-open="${t.i}" data-all data-cursor="Zobacz" tabindex="-1" aria-hidden="true"><img src="${esc(t.src)}" alt="" loading="lazy" decoding="async"></button>`));
+        `<button class="strip__item" data-open="${t.i}" data-all tabindex="-1" aria-hidden="true">${img(t, '(max-width: 560px) 62vw, 25vw', 'alt="" loading="lazy" decoding="async"')}</button>`));
     }
     const clone = group.cloneNode(true);
     row.append(group, clone);
@@ -337,7 +330,7 @@
   const tick = t => {
     const dt = Math.min(t - (lastT || t), 50);
     lastT = t;
-    if (stripVisible && !reduce) {
+    if (stripVisible && !reduce && !isOpen) {
       speedMul += ((stripHover ? 0.15 : 1) - speedMul) * 0.06;
       scrollBoost *= 0.92;
       const v = 0.035 * speedMul * (1 + scrollBoost) * dt;
@@ -352,28 +345,6 @@
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
-
-  /* ---------- Cursor bubble ---------- */
-  const cursor = $('.cursor');
-  if (finePointer) {
-    const label = $('.cursor__label');
-    let x = -100, y = -100, tx = -100, ty = -100, primed = false;
-    addEventListener('pointermove', e => {
-      tx = e.clientX; ty = e.clientY;
-      if (!primed || reduce) { x = tx; y = ty; primed = true; }
-    }, { passive: true });
-    document.addEventListener('pointerover', e => {
-      const t = e.target.closest('[data-cursor]');
-      cursor.classList.toggle('is-on', !!t && !html.classList.contains('lb-open'));
-      if (t) label.textContent = t.dataset.cursor;
-    });
-    const loop = () => {
-      x += (tx - x) * 0.2; y += (ty - y) * 0.2;
-      cursor.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-      requestAnimationFrame(loop);
-    };
-    loop();
-  }
 
   /* ---------- Nav ---------- */
   const nav = $('.nav');
@@ -415,7 +386,7 @@
       <div class="mock mock--home">
         <span class="mock__label">Strona główna · 360px</span>
         <div class="yt">
-          <div class="yt__thumb"><img src="${esc(cur.src)}" alt=""><span class="yt__time">${m.time}</span></div>
+          <div class="yt__thumb">${img(cur, '360px', 'alt=""')}<span class="yt__time">${m.time}</span></div>
           <div class="yt__meta"><span class="yt__avatar">${avatar(cur)}</span>
             <div><p class="yt__title">${esc(cur.title)}</p><p class="yt__sub">${esc(cur.channel)}</p><p class="yt__sub">${m.views} • ${m.ago}</p></div></div>
         </div>
@@ -424,14 +395,14 @@
         <span class="mock__label">Proponowane · 168px</span>
         ${near.map(t => { const mm = meta(t); return `
           <div class="yt-row${t === cur ? ' is-current' : ''}">
-            <div class="yt__thumb"><img src="${esc(t.src)}" alt=""><span class="yt__time">${mm.time}</span></div>
+            <div class="yt__thumb">${img(t, '168px', 'alt=""')}<span class="yt__time">${mm.time}</span></div>
             <div><p class="yt__title">${esc(t.title)}</p><p class="yt__sub">${esc(t.channel)}</p><p class="yt__sub">${mm.views}</p></div>
           </div>`; }).join('')}
       </div>
       <div class="mock mock--mobile">
         <span class="mock__label">Telefon</span>
         <div class="phone"><div class="phone__screen">
-          <div class="yt__thumb"><img src="${esc(cur.src)}" alt=""><span class="yt__time">${m.time}</span></div>
+          <div class="yt__thumb">${img(cur, '300px', 'alt=""')}<span class="yt__time">${m.time}</span></div>
           <div class="yt__meta"><span class="yt__avatar">${avatar(cur)}</span>
             <div><p class="yt__title">${esc(cur.title)}</p><p class="yt__sub">${esc(cur.channel)} · ${m.views} · ${m.ago}</p></div></div>
         </div></div>
@@ -444,7 +415,7 @@
     lbImg.alt = t.title;
     $('.lb__title', lb).textContent = t.title;
     $('.lb__cat', lb).innerHTML = [channelHtml(t), esc(t.cats.join(' · '))].filter(Boolean).join('<i>·</i>');
-    $('.lb__count', lb).textContent = `${pad(pos + 1)} / ${pad(list.length)}`;
+    $('.lb__count', lb).textContent = `${pos + 1} / ${list.length}`;
     $$('.lb__arrow', lb).forEach(b => (b.style.visibility = list.length > 1 ? '' : 'hidden'));
     if (mode === 'feed') renderFeed();
     [-1, 1].forEach(o => { const nx = items[list[(pos + o + list.length) % list.length]]; if (nx) new Image().src = nx.src; });
@@ -475,19 +446,18 @@
     fill();
     lb.hidden = false;
     html.classList.add('lb-open');
-    cursor.classList.remove('is-on');
     closeBtn.focus({ preventScroll: true });
     if (reduce) return;
 
-    lbBg.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 600, easing: EASE });
+    lbBg.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 400, easing: EASE });
     chrome.forEach((c, k) => c.animate(
       [{ opacity: 0, transform: `translateY(${k ? 12 : -12}px)` }, { opacity: 1, transform: 'none' }],
-      { duration: 800, delay: 180, easing: EASE, fill: 'backwards' }));
+      { duration: 500, delay: 120, easing: EASE, fill: 'backwards' }));
 
     if (mode === 'full' && fromEl) {
       const from = fromEl.getBoundingClientRect();
       const to = lbFull.getBoundingClientRect();
-      lbFull.animate([{ transform: rectTransform(from, to) }, { transform: 'none' }], { duration: 900, easing: EASE });
+      lbFull.animate([{ transform: rectTransform(from, to) }, { transform: 'none' }], { duration: 550, easing: EASE });
     } else {
       (mode === 'full' ? lbFull : lbFeed).animate(
         [{ opacity: 0, transform: 'translateY(24px) scale(.98)' }, { opacity: 1, transform: 'none' }], { duration: 800, easing: EASE });
@@ -507,20 +477,22 @@
     if (reduce) return done();
 
     const anims = [
-      lbBg.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 650, easing: EASE, fill: 'forwards' }),
+      lbBg.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, easing: EASE, fill: 'forwards' }),
       ...chrome.map(c => c.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: 'forwards' })),
     ];
     const card = grid.querySelector(`.card[data-i="${list[pos]}"]:not([hidden]) .card__media`);
     const r = card && card.getBoundingClientRect();
     if (mode === 'full' && r && r.bottom > 0 && r.top < innerHeight) {
       anims.push(lbFull.animate([{ transform: 'none' }, { transform: rectTransform(r, lbFull.getBoundingClientRect()) }],
-        { duration: 750, easing: EASE, fill: 'forwards' }));
+        { duration: 450, easing: EASE, fill: 'forwards' }));
     } else {
       anims.push((mode === 'full' ? lbFull : lbFeed).animate(
         [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.96)' }],
         { duration: 400, easing: EASE_IN, fill: 'forwards' }));
     }
-    Promise.all(anims.map(a => a.finished)).then(() => { done(); anims.forEach(a => a.cancel()); });
+    // timeout guard: background tabs may never finish the animation
+    Promise.race([Promise.all(anims.map(a => a.finished)), new Promise(r => setTimeout(r, 600))])
+      .then(() => { done(); anims.forEach(a => a.cancel()); });
   };
 
   const step = async d => {

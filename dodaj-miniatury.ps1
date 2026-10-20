@@ -40,7 +40,7 @@ foreach ($f in $new) {
   $channel = Read-Host '  Kanał [Enter = pomiń]'
 
   $file = $f.Name
-  if ($canConvert -and $f.Extension -ne '.webp') {
+  if ($canConvert) {
     $env:PYTHONIOENCODING = 'utf-8'
     $out = python $converter $f.FullName
     if ($LASTEXITCODE -eq 0 -and $out) { $file = ($out | Select-Object -Last 1).Trim() }
